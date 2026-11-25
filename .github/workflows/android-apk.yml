@@ -4,11 +4,11 @@ name: Build DUAL AI DEBATE APK
 on:
   workflow_dispatch:
   push:
-    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,19 +25,34 @@ jobs:
           gradle-version: '8.13'
 
       - name: Extract project ZIP
+        shell: bash
         run: |
-          ZIP=$(find . -maxdepth 1 -type f -iname '*.zip' | head -n 1)
+          ZIP=$(find . -maxdepth 2 -type f -iname '*.zip' | head -n 1)
           if [ -z "$ZIP" ]; then
             echo "Project ZIP not found"
             exit 1
           fi
-          unzip -o "$ZIP" -d .
+          unzip -o "$ZIP" -d extracted
+
+      - name: Find Android project
+        shell: bash
+        run: |
+          SETTINGS=$(find extracted -type f \( -name settings.gradle -o -name settings.gradle.kts \) | head -n 1)
+          if [ -z "$SETTINGS" ]; then
+            echo "Gradle settings file not found"
+            find extracted -maxdepth 3 -type f
+            exit 1
+          fi
+          PROJECT_DIR=$(dirname "$SETTINGS")
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
       - name: Build APK
-        run: gradle :app:assembleDebug
+        run: gradle -p "$PROJECT_DIR" :app:assembleDebug
 
       - name: Upload APK
-  uses: actions/upload-artifact@v4
-  with:
-    name: DUAL-AI-DEBATE-APK
-    path: DUAL_AI_DEBATE/app/build/outputs/apk/debug/app-debug.apk
+        uses: actions/upload-artifact@v4
+        with:
+          name: DUAL-AI-DEBATE-APK
+          path: extracted/**/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          
