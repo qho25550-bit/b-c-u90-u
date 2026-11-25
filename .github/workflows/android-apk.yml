@@ -37,8 +37,7 @@ jobs:
         run: gradle :app:assembleDebug
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: DUAL-AI-DEBATE-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
-          
+  uses: actions/upload-artifact@v4
+  with:
+    name: DUAL-AI-DEBATE-APK
+    path: DUAL_AI_DEBATE/app/build/outputs/apk/debug/app-debug.apk
